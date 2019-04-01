@@ -1,15 +1,22 @@
 <?php
 require_once 'class/Message.php';
+require 'class/GuestBook.php';
 $errors = null;
-$sucess = null;
+$sucess = false;
+$guestbook = new GuestBook(__DIR__ . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'messages');
 if(isset($_POST['username'], $_POST['message'])){
     $message = new Message($_POST['username'],$_POST['message']);
     if($message->isValid()){
 
+        $guestbook->addMessage($message);
+        $sucess = true;
+        $_POST = [];
     } else {
         $errors = $message->getErrors();
     }
 }
+
+$messages = $guestbook->getMessages();
 $title = "Livre d'or";
 require 'elements/header.php';
 ?>
@@ -22,9 +29,15 @@ require 'elements/header.php';
             Formulaire invalide
         </div>
     <?php endif ?>
+    <?php if ($sucess) : ?>
+        <div class="alert alert-success">
+            Merci pour votre message
+        </div>
+    <?php endif ?>
+
     <form action="" method="post">
         <div class="form-group">
-            <input value="<?= htmlentities($_POST['username']) ?? '' ?>" type="text" name="username" placeholder="Votre pseudo" class="form-control <?= isset($errors['username']) ? 'is-invalid' : '' ?>">
+            <input value="<?= htmlentities($_POST['username'] ?? '') ?>" type="text" name="username" placeholder="Votre pseudo" class="form-control <?= isset($errors['username']) ? 'is-invalid' : '' ?>">
             <?php if(isset($errors['username'])) : ?>
                 <div class="invalid-feedback">
                     <?= $errors['username'] ?>
@@ -32,7 +45,7 @@ require 'elements/header.php';
             <?php endif ?>
         </div>
         <div class="form-group">
-            <textarea name="message" placeholder="Votre message" class="form-control <?= isset($errors['message']) ? 'is-invalid' : '' ?>"><?= htmlentities($_POST['username']) ?? '' ?></textarea>
+            <textarea name="message" placeholder="Votre message" class="form-control <?= isset($errors['message']) ? 'is-invalid' : '' ?>"><?= htmlentities($_POST['username'] ?? '' )?></textarea>
             <?php if(isset($errors['message'])) : ?>
                 <div class="invalid-feedback">
                     <?= $errors['message'] ?>
@@ -41,6 +54,12 @@ require 'elements/header.php';
         </div>
         <button class="btn btn-primary">Envoyer</button>
     </form>
+    <?php if (!empty($messages)):?>
+    <h1 class="mt-4">Vos messages</h1>
+    <?php foreach($messages as $message): ?>
+        <?=  $message->toHTML(); ?>
+    <?php endforeach ?>
+    <?php endif;?>
 </div>
 <?php require 'elements/footer.php';
 ?>
